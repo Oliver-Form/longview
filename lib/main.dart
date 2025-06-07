@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'record_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,11 +35,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
 
-  static const List<IconData> _iconOptions = <IconData>[
-    Icons.home,
-    Icons.mic,
-    Icons.settings,
-  ];
+  // pages for bottom navigation
+  final List<Widget> _pages = [];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -48,30 +46,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // define pages for each tab
+    final pages = <Widget>[
+      // Home placeholder
+      Center(child: Text('Home', style: Theme.of(context).textTheme.headlineSmall)),
+      // Record page
+      const RecordPage(),
+      // Settings placeholder
+      Center(child: Text('Settings', style: Theme.of(context).textTheme.headlineSmall)),
+    ];
     return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 64, 0, 8),
-            child: Text(
-              'Stride',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ), 
-          ),
-          Expanded(
-            child: Center(
-              child: Icon(
-                _iconOptions[_selectedIndex],
-                size: 100,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
+      body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Theme.of(context).colorScheme.primary,
