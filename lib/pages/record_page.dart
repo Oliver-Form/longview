@@ -129,6 +129,9 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
                       options: MapOptions(
                         center: _currentPoint!,
                         zoom: 15.0,
+                        // restrict zoom levels to prevent blank tiles
+                        minZoom: 5.0,
+                        maxZoom: 18.0,
                         // disable rotation gestures
                         interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                       ),
