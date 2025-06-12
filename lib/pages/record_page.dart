@@ -148,6 +148,7 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
                           maxZoomLevel: 18.0,
                           stepZoom: 1.0,
                         ),
+                        enableRotationByGesture: false,
                         userLocationMarker: UserLocationMaker(
                           personMarker: MarkerIcon(
                             icon: Icon(
@@ -211,3 +212,4 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   }
 }
 
+// interesting to approach this problem like this
