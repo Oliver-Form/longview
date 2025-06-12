@@ -18,7 +18,23 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   Position? _lastPosition;
   double _distance = 0.0;
   GeoPoint? _currentPoint;
-  final MapController _osmController = MapController.withUserPosition(trackUserLocation: const UserTrackingOption(enableTracking: false, unFollowUser: false));
+  final MapController _osmController = MapController.customLayer(
+    initMapWithUserPosition: const UserTrackingOption(
+      enableTracking: false,
+      unFollowUser: false,
+    ),
+    customTile: CustomTile(
+      sourceName: 'carto_dark',
+      tileExtension: '.png',
+      tileSize: 256,
+      urlsServers: [
+        TileURLs(
+          url: 'https://basemaps.cartocdn.com/dark_all/',
+          subdomains: ['a', 'b', 'c', 'd'],
+        ),
+      ],
+    ),
+  );
 
   String get _formattedTime {
     final duration = _stopwatch.elapsed;
