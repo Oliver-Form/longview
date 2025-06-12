@@ -10,7 +10,7 @@ class RecordPage extends StatefulWidget {
   _RecordPageState createState() => _RecordPageState();
 }
 
-class _RecordPageState extends State<RecordPage> {
+class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMixin<RecordPage> {
   bool _isTracking = false;
   final Stopwatch _stopwatch = Stopwatch();
   Timer? _timer;
@@ -110,7 +110,11 @@ class _RecordPageState extends State<RecordPage> {
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       body: SafeArea(
         child: Column(

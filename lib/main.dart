@@ -34,9 +34,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
 
-  // pages for bottom navigation
-  final List<Widget> _pages = [];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -45,17 +42,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // define pages for each tab
-    final pages = <Widget>[
-      // Home placeholder
-      Center(child: Text('Home', style: Theme.of(context).textTheme.headlineSmall)),
-      // Record page
-      const RecordPage(),
-      // Settings placeholder
-      Center(child: Text('Settings', style: Theme.of(context).textTheme.headlineSmall)),
-    ];
     return Scaffold(
-      body: pages[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          Center(child: Text('Home', style: Theme.of(context).textTheme.headlineSmall)),
+          const RecordPage(),
+          Center(child: Text('Settings', style: Theme.of(context).textTheme.headlineSmall)),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Theme.of(context).colorScheme.primary,
