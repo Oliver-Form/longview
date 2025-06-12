@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class RecordPage extends StatefulWidget {
   const RecordPage({Key? key}) : super(key: key);
@@ -17,24 +18,8 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   StreamSubscription<Position>? _positionSubscription;
   Position? _lastPosition;
   double _distance = 0.0;
-  GeoPoint? _currentPoint;
-  final MapController _osmController = MapController.customLayer(
-    initMapWithUserPosition: const UserTrackingOption(
-      enableTracking: false,
-      unFollowUser: false,
-    ),
-    customTile: CustomTile(
-      sourceName: 'carto_dark',
-      tileExtension: '.png',
-      tileSize: 256,
-      urlsServers: [
-        TileURLs(
-          url: 'https://basemaps.cartocdn.com/dark_all/',
-          subdomains: ['a', 'b', 'c', 'd'],
-        ),
-      ],
-    ),
-  );
+  LatLng? _currentPoint;
+  final MapController _mapController = MapController();
 
   String get _formattedTime {
     final duration = _stopwatch.elapsed;
@@ -54,7 +39,7 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
     try {
       Position pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
-      _currentPoint = GeoPoint(latitude: pos.latitude, longitude: pos.longitude);
+      _currentPoint = LatLng(pos.latitude, pos.longitude);
       setState(() {});
     } catch (e) {
       // handle error
@@ -84,7 +69,7 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
         distanceFilter: 1,
         intervalDuration: const Duration(milliseconds: 500),
       ),
-    ).listen((Position position) {
+    ).listen((Position position) async {
       if (_lastPosition != null) {
         final meters = Geolocator.distanceBetween(
           _lastPosition!.latitude,
@@ -95,10 +80,11 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
         _distance += meters;
       }
       _lastPosition = position;
-      // update current location
-      _currentPoint = GeoPoint(latitude: position.latitude, longitude: position.longitude);
-      // center map on new position
-      _osmController.changeLocation(_currentPoint!);
+      // update current location and map marker
+      final updated = LatLng(position.latitude, position.longitude);
+      _currentPoint = updated;
+      // update camera via flutter_map controller
+      _mapController.move(updated, _mapController.zoom);
       setState(() {});
     });
   }
@@ -138,48 +124,28 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
             Expanded(
               child: _currentPoint == null
                   ? const Center(child: CircularProgressIndicator())
-                  : OSMFlutter(
-                      controller: _osmController,
-                      osmOption: OSMOption(
-                        showZoomController: true,
-                        zoomOption: ZoomOption(
-                          initZoom: 15.0,
-                          minZoomLevel: 3.0,
-                          maxZoomLevel: 18.0,
-                          stepZoom: 1.0,
-                        ),
-                        enableRotationByGesture: false,
-                        userLocationMarker: UserLocationMaker(
-                          personMarker: MarkerIcon(
-                            icon: Icon(
-                              Icons.my_location,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                          directionArrowMarker: MarkerIcon(
-                            icon: Icon(
-                              Icons.navigation,
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                          ),
-                        ),
-                        staticPoints: [
-                          StaticPositionGeoPoint(
-                            'current',
-                            MarkerIcon(
-                              icon: Icon(
-                                Icons.my_location,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            // wrap in list for multiple points
-                            [_currentPoint!],
-                          ),
-                        ],
+                  : FlutterMap(
+                      mapController: _mapController,
+                      options: MapOptions(
+                        center: _currentPoint!,
+                        zoom: 15.0,
+                        // disable rotation gestures
+                        interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                       ),
-                      onLocationChanged: (GeoPoint point) {
-                        // optional callback when location updates
-                      },
+                      children: [
+                        TileLayer(
+                          urlTemplate: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                          subdomains: ['a', 'b', 'c', 'd'],
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: _currentPoint!,
+                              builder: (_) => Icon(Icons.circle, color: Colors.blue, size: 20),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
             ),
             const SizedBox(height: 16),
@@ -212,4 +178,3 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   }
 }
 
-// interesting to approach this problem like this
