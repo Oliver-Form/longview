@@ -22,6 +22,7 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   LatLng? _startPoint;
   LatLng? _endPoint;
   final MapController _mapController = MapController();
+  final List<LatLng> _routePoints = [];
 
   String get _formattedTime {
     final duration = _stopwatch.elapsed;
@@ -42,6 +43,8 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
       Position pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
       _currentPoint = LatLng(pos.latitude, pos.longitude);
+      _routePoints.clear();
+      _routePoints.add(_currentPoint!);
       setState(() {});
     } catch (e) {
       // handle error
@@ -88,6 +91,7 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
       // update current location and map marker
       final updated = LatLng(position.latitude, position.longitude);
       _currentPoint = updated;
+      _routePoints.add(updated);
       // update camera via flutter_map controller
       _mapController.move(updated, _mapController.zoom);
       setState(() {});
@@ -147,6 +151,16 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
                           urlTemplate: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
                           subdomains: ['a', 'b', 'c', 'd'],
                         ),
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points: _routePoints,
+                              color: Colors.blue,
+                              strokeWidth: 4.0,
+                              isDotted: true,
+                            ),
+                          ],
+                        ),
                         MarkerLayer(
                           markers: [
                             if (_startPoint != null)
@@ -199,4 +213,3 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   }
 }
 
-// 
