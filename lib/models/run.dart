@@ -1,12 +1,16 @@
 import 'dart:convert';
 
 class Run {
-  final String time;
+  final String startTime;
+  final String endTime;
+  final String time; // duration string (e.g. "00:12:34")
   final String distance;
   final String imagePath;
   final String comment;
 
   Run({
+    required this.startTime,
+    required this.endTime,
     required this.time,
     required this.distance,
     required this.imagePath,
@@ -14,6 +18,8 @@ class Run {
   });
 
   factory Run.fromJson(Map<String, dynamic> json) => Run(
+        startTime: json['startTime'] as String,
+        endTime: json['endTime'] as String,
         time: json['time'] as String,
         distance: json['distance'] as String,
         imagePath: json['imagePath'] as String,
@@ -21,6 +27,8 @@ class Run {
       );
 
   Map<String, dynamic> toJson() => {
+        'startTime': startTime,
+        'endTime': endTime,
         'time': time,
         'distance': distance,
         'imagePath': imagePath,

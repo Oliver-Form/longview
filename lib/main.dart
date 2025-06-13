@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/record_page.dart';
 import 'pages/past_runs_page.dart';
+import 'pages/settings_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -56,7 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // attach key so we can reload runs when tab changes
           PastRunsPage(key: _pastRunsKey),
           const RecordPage(),
-          Center(child: Text('Settings', style: Theme.of(context).textTheme.headlineSmall)),
+          const SettingsPage(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
