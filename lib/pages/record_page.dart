@@ -38,6 +38,18 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
     return "${km.toStringAsFixed(2)} km";
   }
 
+  String get _formattedPace {
+    if (_distance > 0) {
+      final paceSeconds = _stopwatch.elapsed.inSeconds / (_distance / 1000);
+      final minutes = paceSeconds ~/ 60;
+      final seconds = (paceSeconds % 60).round();
+      String twoDigits(int n) => n.toString().padLeft(2, '0');
+      return "$minutes'${twoDigits(seconds)}\" /km";
+    } else {
+      return "--'--\" /km";
+    }
+  }
+
   Future<void> _initCurrentLocation() async {
     try {
       Position pos = await Geolocator.getCurrentPosition(
@@ -200,6 +212,12 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
                 ],
               ),
             ),
+            const SizedBox(height: 4),
+            Text(
+              _formattedPace,
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _isTracking ? _stopTracking : _startTracking,
@@ -213,3 +231,4 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   }
 }
 
+//
