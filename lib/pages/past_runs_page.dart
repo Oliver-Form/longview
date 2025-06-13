@@ -46,11 +46,30 @@ class PastRunsPageState extends State<PastRunsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // display formatted start time
-                Text(
-                  '${DateFormat('d MMM yyyy, HH:mm').format(DateTime.parse(run.startTime).toLocal())}',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Start: ${DateFormat('d MMM yyyy, HH:mm').format(DateTime.parse(run.startTime).toLocal())}',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.grey),
+                      onPressed: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        final jsonString = prefs.getString('runs') ?? '[]';
+                        final allRuns = Run.listFromJson(jsonString);
+                        allRuns.removeWhere((r) =>
+                          r.startTime == run.startTime && r.endTime == run.endTime
+                        );
+                        await prefs.setString('runs', Run.listToJson(allRuns));
+                        loadRuns();
+                      },
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 4),
                 // show duration
                 Text(
                   'Duration: ${run.time}',
