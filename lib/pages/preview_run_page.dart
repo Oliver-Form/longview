@@ -34,24 +34,28 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
   @override
   void initState() {
     super.initState();
-    // wait for a frame to snapshot
-    WidgetsBinding.instance.addPostFrameCallback((_) => _captureMapImage());
+    // no pre-capture; image will be captured on Save
   }
 
   Future<void> _captureMapImage() async {
     try {
-      RenderRepaintBoundary boundary = _mapKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      RenderRepaintBoundary? boundary = _mapKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) {
+        debugPrint('RepaintBoundary not found for map snapshot');
+        return;
+      }
       ui.Image image = await boundary.toImage(pixelRatio: 2.0);
       setState(() => _mapImage = image);
       // optionally write PNG to disk
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      final bytes = byteData!.buffer.asUint8List();
+      if (byteData == null) return;
+      final bytes = byteData.buffer.asUint8List();
       final dir = await getApplicationDocumentsDirectory();
       final file = File('${dir.path}/run_${DateTime.now().millisecondsSinceEpoch}.png');
       await file.writeAsBytes(bytes);
       setState(() => _imagePath = file.path);
-    } catch (e) {
-      // handle errors
+    } catch (e, st) {
+      debugPrint('Error in _captureMapImage: $e\n$st');
     }
   }
 
@@ -66,11 +70,11 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
             Text('Time: ${widget.formattedTime}', style: Theme.of(context).textTheme.headlineSmall),
             Text('Distance: ${widget.formattedDistance}', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 16),
-            RepaintBoundary(
-              key: _mapKey,
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                height: 200,
+            SizedBox(
+              width: double.infinity,
+              height: 200,
+              child: RepaintBoundary(
+                key: _mapKey,
                 child: FlutterMap(
                   options: MapOptions(
                     interactiveFlags: InteractiveFlag.none,
@@ -100,6 +104,9 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () async {
+                // capture snapshot
+                await _captureMapImage();
+                // save run
                 final prefs = await SharedPreferences.getInstance();
                 final existing = prefs.getString('runs') ?? '[]';
                 final list = Run.listFromJson(existing);
@@ -120,4 +127,3 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
     );
   }
 }
-

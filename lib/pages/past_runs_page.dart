@@ -40,17 +40,21 @@ class PastRunsPageState extends State<PastRunsPage> {
         final run = _runs[index];
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8.0),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(8.0),
-            leading: run.imagePath.isNotEmpty ?
-              Image.file(File(run.imagePath), width: 60, height: 60, fit: BoxFit.cover)
-              : const SizedBox(width:60, height:60),
-            title: Text(run.distance),
-            subtitle: Column(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(run.time),
-                if (run.comment.isNotEmpty) Text(run.comment),
+                Text('Time: ${run.time}', style: Theme.of(context).textTheme.headlineSmall),
+                Text('Distance: ${run.distance}', style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 12),
+                if (run.imagePath.isNotEmpty)
+                  Image.file(File(run.imagePath), width: double.infinity, height: 200, fit: BoxFit.cover)
+                else
+                  Container(width: double.infinity, height: 200, color: Colors.grey[300]),
+                const SizedBox(height: 12),
+                if (run.comment.isNotEmpty)
+                  Text(run.comment, style: Theme.of(context).textTheme.bodyLarge),
               ],
             ),
           ),
