@@ -19,6 +19,8 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   Position? _lastPosition;
   double _distance = 0.0;
   LatLng? _currentPoint;
+  LatLng? _startPoint;
+  LatLng? _endPoint;
   final MapController _mapController = MapController();
 
   String get _formattedTime {
@@ -53,6 +55,9 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
       return;
     }
     setState(() {
+      // place green circle at start location
+      _startPoint = _currentPoint;
+      _endPoint = null;
       _isTracking = true;
       _distance = 0;
     });
@@ -92,6 +97,8 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   void _stopTracking() {
     setState(() {
       _isTracking = false;
+      // place red square at stop location
+      _endPoint = _currentPoint;
     });
     _stopwatch.stop();
     _timer?.cancel();
@@ -142,10 +149,21 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
                         ),
                         MarkerLayer(
                           markers: [
-                            Marker(
-                              point: _currentPoint!,
-                              builder: (_) => Icon(Icons.circle, color: Colors.blue, size: 20),
-                            ),
+                            if (_startPoint != null)
+                              Marker(
+                                point: _startPoint!,
+                                builder: (_) => Icon(Icons.circle, color: Colors.green, size: 20),
+                              ),
+                            if (_currentPoint != null)
+                              Marker(
+                                point: _currentPoint!,
+                                builder: (_) => Icon(Icons.circle, color: Colors.blue, size: 20),
+                              ),
+                            if (_endPoint != null)
+                              Marker(
+                                point: _endPoint!,
+                                builder: (_) => Icon(Icons.stop, color: Colors.red, size: 20),
+                              ),
                           ],
                         ),
                       ],
@@ -181,3 +199,4 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   }
 }
 
+// 
