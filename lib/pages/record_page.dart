@@ -26,6 +26,9 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   final MapController _mapController = MapController();
   final List<LatLng> _routePoints = [];
 
+  String _startIso = '';
+  String _endIso = '';
+
   String get _formattedTime {
     final duration = _stopwatch.elapsed;
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -72,7 +75,10 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
         permission == LocationPermission.deniedForever) {
       return;
     }
+    // record start time in ISO 8601 UTC
+    final nowStart = DateTime.now().toUtc().toIso8601String();
     setState(() {
+      _startIso = nowStart;
       // place green circle at start location
       _startPoint = _currentPoint;
       _endPoint = null;
@@ -128,6 +134,8 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   void _finishRun() {
     // Stop tracking and send data to preview screen
     _stopTracking();
+    // record end time in ISO 8601 UTC
+    _endIso = DateTime.now().toUtc().toIso8601String();
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -135,6 +143,8 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
           routePoints: _routePoints,
           formattedTime: _formattedTime,
           formattedDistance: _formattedDistance,
+          startTime: _startIso,
+          endTime: _endIso,
         ),
       ),
     );
@@ -280,3 +290,5 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
     );
   }
 } 
+
+// 
