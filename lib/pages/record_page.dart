@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'preview_run_page.dart'; // Import the new PreviewRunPage
 
 class RecordPage extends StatefulWidget {
   const RecordPage({Key? key}) : super(key: key);
@@ -13,6 +14,7 @@ class RecordPage extends StatefulWidget {
 
 class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMixin<RecordPage> {
   bool _isTracking = false;
+  bool _isPaused = false;
   final Stopwatch _stopwatch = Stopwatch();
   Timer? _timer;
   StreamSubscription<Position>? _positionSubscription;
@@ -64,6 +66,7 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   }
 
   Future<void> _startTracking() async {
+    _isPaused = false;
     LocationPermission permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
@@ -110,6 +113,7 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
     });
   }
 
+  // fully stop and mark end of run
   void _stopTracking() {
     setState(() {
       _isTracking = false;
@@ -119,6 +123,41 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
     _stopwatch.stop();
     _timer?.cancel();
     _positionSubscription?.cancel();
+  }
+
+  void _finishRun() {
+    // Stop tracking and send data to preview screen
+    _stopTracking();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PreviewRunPage(
+          routePoints: _routePoints,
+          formattedTime: _formattedTime,
+          formattedDistance: _formattedDistance,
+        ),
+      ),
+    );
+  }
+  
+  // pause the run (stop counters, location updates)
+  void _pauseTracking() {
+    setState(() {
+      _isPaused = true;
+    });
+    _stopwatch.stop();
+    _timer?.cancel();
+    _positionSubscription?.pause();
+  }
+
+  // resume after pause
+  void _resumeTracking() {
+    setState(() {
+      _isPaused = false;
+    });
+    _stopwatch.start();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+    _positionSubscription?.resume();
   }
 
   @override
@@ -196,39 +235,48 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
                     ),
             ),
             const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
+            // Bottom controls: big Start button initially, otherwise Pause/Resume + Finish
+            if (!_isTracking) ...[
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16)),
+                  onPressed: _startTracking,
+                  child: const Text('Start', style: TextStyle(fontSize: 18)),
+                ),
+              ),
+            ] else ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Text(_formattedTime, style: Theme.of(context).textTheme.headlineMedium),
+                    Text(_formattedDistance, style: Theme.of(context).textTheme.headlineMedium),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(_formattedPace, style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text(
-                    _formattedTime,
-                    style: Theme.of(context).textTheme.headlineMedium,
+                  ElevatedButton.icon(
+                    onPressed: _isPaused ? _resumeTracking : _pauseTracking,
+                    icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
+                    label: const Text(''),
                   ),
-                  Text(
-                    _formattedDistance,
-                    style: Theme.of(context).textTheme.headlineMedium,
+                  ElevatedButton(
+                    onPressed: _finishRun,
+                    child: const Text('Finish'),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _formattedPace,
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _isTracking ? _stopTracking : _startTracking,
-              child: Text(_isTracking ? 'Stop' : 'Start'),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
+            ],
           ],
         ),
       ),
     );
   }
-}
-
-//
+} 
