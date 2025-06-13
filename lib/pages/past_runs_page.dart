@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stride/models/run.dart';
+import 'package:intl/intl.dart';
 
 class PastRunsPage extends StatefulWidget {
   const PastRunsPage({Key? key}) : super(key: key);
@@ -45,7 +46,16 @@ class PastRunsPageState extends State<PastRunsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Time: ${run.time}', style: Theme.of(context).textTheme.headlineSmall),
+                // display formatted start time
+                Text(
+                  '${DateFormat('d MMM yyyy, HH:mm').format(DateTime.parse(run.startTime).toLocal())}',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                // show duration
+                Text(
+                  'Duration: ${run.time}',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
                 Text('Distance: ${run.distance}', style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 12),
                 if (run.imagePath.isNotEmpty)

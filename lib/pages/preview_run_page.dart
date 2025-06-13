@@ -13,12 +13,16 @@ class PreviewRunPage extends StatefulWidget {
   final List<LatLng> routePoints;
   final String formattedTime;
   final String formattedDistance;
+  final String startTime;
+  final String endTime;
 
   const PreviewRunPage({
     Key? key,
     required this.routePoints,
     required this.formattedTime,
     required this.formattedDistance,
+    required this.startTime,
+    required this.endTime,
   }) : super(key: key);
 
   @override
@@ -111,6 +115,8 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
                 final existing = prefs.getString('runs') ?? '[]';
                 final list = Run.listFromJson(existing);
                 list.add(Run(
+                  startTime: widget.startTime,
+                  endTime: widget.endTime,
                   time: widget.formattedTime,
                   distance: widget.formattedDistance,
                   imagePath: _imagePath,
@@ -127,3 +133,4 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
     );
   }
 }
+
