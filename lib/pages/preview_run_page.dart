@@ -5,6 +5,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/rendering.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stride/models/run.dart';
 import 'dart:io';
 
 class PreviewRunPage extends StatefulWidget {
@@ -26,6 +28,8 @@ class PreviewRunPage extends StatefulWidget {
 class _PreviewRunPageState extends State<PreviewRunPage> {
   final GlobalKey _mapKey = GlobalKey();
   ui.Image? _mapImage;
+  String _imagePath = '';
+  final TextEditingController _commentController = TextEditingController();
 
   @override
   void initState() {
@@ -45,6 +49,7 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
       final dir = await getApplicationDocumentsDirectory();
       final file = File('${dir.path}/run_${DateTime.now().millisecondsSinceEpoch}.png');
       await file.writeAsBytes(bytes);
+      setState(() => _imagePath = file.path);
     } catch (e) {
       // handle errors
     }
@@ -88,13 +93,23 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
             ),
             const SizedBox(height: 16),
             TextField(
+              controller: _commentController,
               decoration: const InputDecoration(labelText: 'Add your comments'),
               maxLines: 3,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                // TODO: save run metadata + image path + comments
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                final existing = prefs.getString('runs') ?? '[]';
+                final list = Run.listFromJson(existing);
+                list.add(Run(
+                  time: widget.formattedTime,
+                  distance: widget.formattedDistance,
+                  imagePath: _imagePath,
+                  comment: _commentController.text,
+                ));
+                await prefs.setString('runs', Run.listToJson(list));
                 Navigator.pop(context);
               },
               child: const Text('Save Run'),

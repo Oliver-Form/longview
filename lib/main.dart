@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/record_page.dart';
+import 'pages/past_runs_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,11 +34,17 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
+  // key to control the PastRunsPage
+  final GlobalKey<PastRunsPageState> _pastRunsKey = GlobalKey<PastRunsPageState>();
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    // refresh runs when switching to the Home tab
+    if (index == 0) {
+      _pastRunsKey.currentState?.loadRuns();
+    }
   }
 
   @override
@@ -46,7 +53,8 @@ class _MyHomePageState extends State<MyHomePage> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          Center(child: Text('Home', style: Theme.of(context).textTheme.headlineSmall)),
+          // attach key so we can reload runs when tab changes
+          PastRunsPage(key: _pastRunsKey),
           const RecordPage(),
           Center(child: Text('Settings', style: Theme.of(context).textTheme.headlineSmall)),
         ],
