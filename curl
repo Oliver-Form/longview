@@ -1,0 +1,31 @@
+curl -X 'POST' \
+  'https://api.hevyapp.com/v1/workouts' \
+  -H 'accept: application/json' \
+  -H 'api-key: 63309373-7113-4e38-9f66-716b6a7a69d5' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "workout": {
+    "title": "Testing run with swagger",
+    "description": "Testing with new API Key",
+    "start_time": "2025-06-13T18:33:14.104Z",
+    "end_time": "2025-06-13T18:33:14.104Z",
+    "is_private": false,
+    "exercises": [
+      {
+        "exercise_template_id": "AC1BB830",
+        "superset_id": null,
+        "sets": [
+          {
+            "type": "normal",
+            "weight_kg": null,
+            "reps": null,
+            "distance_meters": 500,
+            "duration_seconds": 300,
+            "custom_metric": null,
+            "rpe": null
+          }
+        ]
+      }
+    ]
+  }
+}'
