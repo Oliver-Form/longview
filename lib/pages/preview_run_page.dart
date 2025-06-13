@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -8,6 +9,8 @@ import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stride/models/run.dart';
 import 'dart:io';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 
 class PreviewRunPage extends StatefulWidget {
   final List<LatLng> routePoints;
@@ -34,6 +37,7 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
   ui.Image? _mapImage;
   String _imagePath = '';
   final TextEditingController _commentController = TextEditingController();
+  final _secureStorage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -110,10 +114,11 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
               onPressed: () async {
                 // capture snapshot
                 await _captureMapImage();
-                // save run
+                // save run locally
                 final prefs = await SharedPreferences.getInstance();
                 final existing = prefs.getString('runs') ?? '[]';
                 final list = Run.listFromJson(existing);
+                final runCount = list.length + 1;
                 list.add(Run(
                   startTime: widget.startTime,
                   endTime: widget.endTime,
@@ -123,6 +128,57 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
                   comment: _commentController.text,
                 ));
                 await prefs.setString('runs', Run.listToJson(list));
+                // post to Hevy API if connected
+                final key = await _secureStorage.read(key: 'hevy_api_key');
+                if (key != null && key.isNotEmpty) {
+                  // parse duration seconds
+                  final parts = widget.formattedTime.split(':');
+                  final durationSeconds = int.parse(parts[0]) * 3600 + int.parse(parts[1]) * 60 + int.parse(parts[2]);
+                  // parse distance meters
+                  final kmValue = double.tryParse(widget.formattedDistance.split(' ').first) ?? 0.0;
+                  final distanceMeters = (kmValue * 1000).round();
+                  // prepare payload per Hevy API spec
+                  final payload = {
+                    'workout': {
+                      'title': 'Longview run #$runCount',
+                      'description': _commentController.text,
+                      'start_time': widget.startTime,
+                      'end_time': widget.endTime,
+                      'is_private': false,
+                      'exercises': [
+                        {
+                          'exercise_template_id': 'AC1BB830',
+                          'superset_id': null,
+                          'sets': [
+                            {
+                              'type': 'normal',
+                              'weight_kg': null,
+                              'reps': null,
+                              'distance_meters': distanceMeters,
+                              'duration_seconds': durationSeconds,
+                              'custom_metric': null,
+                              'rpe': null,
+                            }
+                          ],
+                        }
+                      ],
+                    },
+                  };
+                  final response = await http.post(
+                    Uri.parse('https://api.hevyapp.com/v1/workouts'),
+                    headers: {
+                      'accept': 'application/json',
+                      'api-key': key,
+                      'Content-Type': 'application/json',
+                    },
+                    body: jsonEncode(payload),
+                  );
+                  if (response.statusCode != 201) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('201 not returned')),
+                    );
+                  }
+                }
                 Navigator.pop(context);
               },
               child: const Text('Save Run'),
