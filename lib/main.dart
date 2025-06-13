@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'record_page.dart';
+import 'pages/record_page.dart';
+import 'pages/past_runs_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +15,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-
         fontFamily: 'Georgia',
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF19647E)),
       ),
@@ -34,29 +34,31 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
-
-  // pages for bottom navigation
-  final List<Widget> _pages = [];
+  // key to control the PastRunsPage
+  final GlobalKey<PastRunsPageState> _pastRunsKey = GlobalKey<PastRunsPageState>();
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    // refresh runs when switching to the Home tab
+    if (index == 0) {
+      _pastRunsKey.currentState?.loadRuns();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // define pages for each tab
-    final pages = <Widget>[
-      // Home placeholder
-      Center(child: Text('Home', style: Theme.of(context).textTheme.headlineSmall)),
-      // Record page
-      const RecordPage(),
-      // Settings placeholder
-      Center(child: Text('Settings', style: Theme.of(context).textTheme.headlineSmall)),
-    ];
     return Scaffold(
-      body: pages[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          // attach key so we can reload runs when tab changes
+          PastRunsPage(key: _pastRunsKey),
+          const RecordPage(),
+          Center(child: Text('Settings', style: Theme.of(context).textTheme.headlineSmall)),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Theme.of(context).colorScheme.primary,
