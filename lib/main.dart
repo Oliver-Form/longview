@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'pages/record_page.dart';
 import 'pages/past_runs_page.dart';
 import 'pages/settings_page.dart';
+import 'background_location_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await BackgroundLocationService.init();
   runApp(const MyApp());
 }
 
