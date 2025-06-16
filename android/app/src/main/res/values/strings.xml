@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Stride</string>
+    <string name="notification_title">Stride Running</string>
+    <string name="notification_channel_name">Run Tracking</string>
+    <string name="notification_pause">Pause</string>
+    <string name="notification_resume">Resume</string>
+    <string name="notification_stop">Stop</string>
+</resources>
