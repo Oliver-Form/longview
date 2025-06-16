@@ -185,7 +185,17 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
           endTime: _endIso,
         ),
       ),
-    );
+    ).then((clearMap) {
+      // Only clear the start and end markers if true is returned (run saved or discarded)
+      if (clearMap == true) {
+        setState(() {
+          _startPoint = null;
+          _endPoint = null;
+          // Keep _currentPoint to maintain the blue current position marker
+          // Keep _routePoints to maintain the route line
+        });
+      }
+    });
   }
   
   // pause the run (stop counters, location updates)

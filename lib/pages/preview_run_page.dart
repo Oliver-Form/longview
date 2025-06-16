@@ -110,78 +110,94 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
               maxLines: 3,
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                // capture snapshot
-                await _captureMapImage();
-                // save run locally
-                final prefs = await SharedPreferences.getInstance();
-                final existing = prefs.getString('runs') ?? '[]';
-                final list = Run.listFromJson(existing);
-                final runCount = list.length + 1;
-                list.add(Run(
-                  startTime: widget.startTime,
-                  endTime: widget.endTime,
-                  time: widget.formattedTime,
-                  distance: widget.formattedDistance,
-                  imagePath: _imagePath,
-                  comment: _commentController.text,
-                ));
-                await prefs.setString('runs', Run.listToJson(list));
-                // post to Hevy API if connected
-                final key = await _secureStorage.read(key: 'hevy_api_key');
-                if (key != null && key.isNotEmpty) {
-                  // parse duration seconds
-                  final parts = widget.formattedTime.split(':');
-                  final durationSeconds = int.parse(parts[0]) * 3600 + int.parse(parts[1]) * 60 + int.parse(parts[2]);
-                  // parse distance meters
-                  final kmValue = double.tryParse(widget.formattedDistance.split(' ').first) ?? 0.0;
-                  final distanceMeters = (kmValue * 1000).round();
-                  // prepare payload per Hevy API spec
-                  final payload = {
-                    'workout': {
-                      'title': 'Longview run #$runCount',
-                      'description': _commentController.text,
-                      'start_time': widget.startTime,
-                      'end_time': widget.endTime,
-                      'is_private': false,
-                      'exercises': [
-                        {
-                          'exercise_template_id': 'AC1BB830',
-                          'superset_id': null,
-                          'sets': [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    // Return true to indicate the map should be cleared
+                    Navigator.pop(context, true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                  ),
+                  child: const Text('Discard Run'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    // capture snapshot
+                    await _captureMapImage();
+                    // save run locally
+                    final prefs = await SharedPreferences.getInstance();
+                    final existing = prefs.getString('runs') ?? '[]';
+                    final list = Run.listFromJson(existing);
+                    final runCount = list.length + 1;
+                    list.add(Run(
+                      startTime: widget.startTime,
+                      endTime: widget.endTime,
+                      time: widget.formattedTime,
+                      distance: widget.formattedDistance,
+                      imagePath: _imagePath,
+                      comment: _commentController.text,
+                    ));
+                    await prefs.setString('runs', Run.listToJson(list));
+                    // post to Hevy API if connected
+                    final key = await _secureStorage.read(key: 'hevy_api_key');
+                    if (key != null && key.isNotEmpty) {
+                      // parse duration seconds
+                      final parts = widget.formattedTime.split(':');
+                      final durationSeconds = int.parse(parts[0]) * 3600 + int.parse(parts[1]) * 60 + int.parse(parts[2]);
+                      // parse distance meters
+                      final kmValue = double.tryParse(widget.formattedDistance.split(' ').first) ?? 0.0;
+                      final distanceMeters = (kmValue * 1000).round();
+                      // prepare payload per Hevy API spec
+                      final payload = {
+                        'workout': {
+                          'title': 'Longview run #$runCount',
+                          'description': _commentController.text,
+                          'start_time': widget.startTime,
+                          'end_time': widget.endTime,
+                          'is_private': false,
+                          'exercises': [
                             {
-                              'type': 'normal',
-                              'weight_kg': null,
-                              'reps': null,
-                              'distance_meters': distanceMeters,
-                              'duration_seconds': durationSeconds,
-                              'custom_metric': null,
-                              'rpe': null,
+                              'exercise_template_id': 'AC1BB830',
+                              'superset_id': null,
+                              'sets': [
+                                {
+                                  'type': 'normal',
+                                  'weight_kg': null,
+                                  'reps': null,
+                                  'distance_meters': distanceMeters,
+                                  'duration_seconds': durationSeconds,
+                                  'custom_metric': null,
+                                  'rpe': null,
+                                }
+                              ],
                             }
                           ],
-                        }
-                      ],
-                    },
-                  };
-                  final response = await http.post(
-                    Uri.parse('https://api.hevyapp.com/v1/workouts'),
-                    headers: {
-                      'accept': 'application/json',
-                      'api-key': key,
-                      'Content-Type': 'application/json',
-                    },
-                    body: jsonEncode(payload),
-                  );
-                  if (response.statusCode != 201) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('201 not returned')),
-                    );
-                  }
-                }
-                Navigator.pop(context);
-              },
-              child: const Text('Save Run'),
+                        },
+                      };
+                      final response = await http.post(
+                        Uri.parse('https://api.hevyapp.com/v1/workouts'),
+                        headers: {
+                          'accept': 'application/json',
+                          'api-key': key,
+                          'Content-Type': 'application/json',
+                        },
+                        body: jsonEncode(payload),
+                      );
+                      if (response.statusCode != 201) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('201 not returned')),
+                        );
+                      }
+                    }
+                    // Return true to indicate the map should be cleared
+                    Navigator.pop(context, true);
+                  },
+                  child: const Text('Save Run'),
+                ),
+              ],
             ),
           ],
         ),
