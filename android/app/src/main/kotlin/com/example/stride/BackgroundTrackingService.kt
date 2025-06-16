@@ -25,6 +25,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.Timer
 import kotlin.concurrent.timer
+import android.speech.tts.TextToSpeech
 
 class BackgroundTrackingService : Service() {
     companion object {
@@ -51,12 +52,26 @@ class BackgroundTrackingService : Service() {
     private var isPaused = false
     private var timerTask: Timer? = null
     private lateinit var prefs: SharedPreferences
+    
+    // Text-to-speech and audio cue variables
+    private lateinit var textToSpeech: TextToSpeech
+    private var ttsInitialized = false
+    private var lastAudioCueDistance = 0.0
 
     override fun onCreate() {
         super.onCreate()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         createNotificationChannel()
+        
+        // Initialize text-to-speech engine
+        textToSpeech = TextToSpeech(applicationContext) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val result = textToSpeech.setLanguage(Locale.getDefault())
+                ttsInitialized = result != TextToSpeech.LANG_MISSING_DATA && 
+                                result != TextToSpeech.LANG_NOT_SUPPORTED
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -75,6 +90,7 @@ class BackgroundTrackingService : Service() {
         isPaused = false
         distanceMeters = 0.0
         lastLocation = null
+        lastAudioCueDistance = 0.0
         
         // Clear any existing route data
         with(prefs.edit()) {
@@ -166,7 +182,23 @@ class BackgroundTrackingService : Service() {
             result.locations.lastOrNull()?.let { location ->
                 // Calculate distance if we have a previous location
                 lastLocation?.let { prev -> 
-                    distanceMeters += prev.distanceTo(location)
+                    val newDistance = prev.distanceTo(location)
+                    distanceMeters += newDistance
+                    
+                    // Check if we should trigger an audio cue (every 100 meters)
+                    val currentHundredMeter = (distanceMeters / 100).toInt()
+                    val lastHundredMeter = (lastAudioCueDistance / 100).toInt()
+                    
+                    if (currentHundredMeter > lastHundredMeter && !isPaused) {
+                        // Calculate elapsed time
+                        val elapsed = System.currentTimeMillis() - startTime - pausedTime
+                        
+                        // Speak the current time
+                        speakTime(elapsed)
+                        
+                        // Update last audio cue distance
+                        lastAudioCueDistance = distanceMeters
+                    }
                 }
                 
                 // Store the location
@@ -278,6 +310,38 @@ class BackgroundTrackingService : Service() {
         val minutes = (millis / (1000 * 60)) % 60
         val hours = millis / (1000 * 60 * 60)
         return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    }
+    
+    private fun speakTime(millis: Long) {
+        if (!ttsInitialized) return
+        
+        val hours = millis / (1000 * 60 * 60)
+        val minutes = (millis / (1000 * 60)) % 60
+        val seconds = (millis / 1000) % 60
+        
+        val timeText = StringBuilder()
+        if (hours > 0) {
+            timeText.append("$hours hours ")
+        }
+        if (minutes > 0 || hours > 0) {
+            timeText.append("$minutes minutes ")
+        }
+        timeText.append("$seconds seconds")
+        
+        textToSpeech.speak(
+            timeText.toString(), 
+            TextToSpeech.QUEUE_FLUSH, 
+            null, 
+            "time_update_${System.currentTimeMillis()}"
+        )
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::textToSpeech.isInitialized) {
+            textToSpeech.stop()
+            textToSpeech.shutdown()
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
