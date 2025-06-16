@@ -69,9 +69,15 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Preview Run')),
-      body: SingleChildScrollView(
+    return WillPopScope(
+      onWillPop: () async {
+        // Return false as result to indicate we should resume the run
+        Navigator.pop(context, false);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Preview Run')),
+        body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -202,7 +208,7 @@ class _PreviewRunPageState extends State<PreviewRunPage> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 
