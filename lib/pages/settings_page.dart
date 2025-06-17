@@ -43,7 +43,7 @@ class SettingsPage extends StatelessWidget {
           ),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.settings),
+            leading: const Icon(Icons.palette),
             title: const Text('Appearance'),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () {
@@ -60,3 +60,5 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
+
+// in terms of design

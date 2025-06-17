@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/map_preferences.dart';
 import '../background_location_service.dart';
 import '../location_storage.dart';
 import '../utils/permissions.dart';
@@ -18,6 +19,8 @@ class RecordPage extends StatefulWidget {
 }
 
 class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMixin<RecordPage> {
+  String _urlTemplate = '';
+  StreamSubscription<void>? _mapPrefSub;
   bool _isTracking = false;
   bool _isPaused = false;
   final Stopwatch _stopwatch = Stopwatch();
@@ -334,9 +337,16 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   @override
   void initState() {
     super.initState();
+    _loadMapUrlTemplate();
+    _mapPrefSub = MapPreferences.onChange.listen((_) => _loadMapUrlTemplate());
     // Initialize location and check tracking status
     _initCurrentLocation();
     _checkTrackingStatus();
+  }
+
+  Future<void> _loadMapUrlTemplate() async {
+    final template = await MapPreferences.getMapUrlTemplate();
+    if (mounted) setState(() => _urlTemplate = template);
   }
 
   Future<void> _checkForActiveRun() async {
@@ -388,6 +398,7 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
 
   @override
   void dispose() {
+    _mapPrefSub?.cancel();
     _timer?.cancel();
     _positionSubscription?.cancel();
     _mapController.dispose();
@@ -430,8 +441,9 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
                       ),
                       children: [
                         TileLayer(
-                          urlTemplate: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                          urlTemplate: _urlTemplate,
                           subdomains: ['a', 'b', 'c', 'd'],
+                          userAgentPackageName: 'com.example.longview',
                         ),
                         PolylineLayer(
                           polylines: [
@@ -512,3 +524,4 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
   }
 } 
 
+// map appearance can be tweaked in settings
