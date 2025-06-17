@@ -71,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
         elevation: 0,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.mic), label: 'Record'),
+          BottomNavigationBarItem(icon: Icon(Icons.mic), label: 'Record Run'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
         currentIndex: _selectedIndex,
@@ -80,3 +80,4 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
