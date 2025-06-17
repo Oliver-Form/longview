@@ -61,4 +61,3 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-// in terms of design
