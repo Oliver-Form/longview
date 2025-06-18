@@ -1,0 +1,21 @@
+name: "Hill Repeats"
+type: hill
+workout:
+  - type: warmup
+    duration: 15m
+    pace: easy
+
+  - type: hill
+    repeats: 6
+    interval:
+      duration: 1m
+      pace: hard
+    recovery:
+      duration: 2m
+      pace: walk
+    
+  - type: cooldown
+    duration: 10m
+    pace: easy
+
+    
