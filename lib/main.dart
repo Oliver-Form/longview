@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'pages/record_page.dart';
 import 'pages/past_runs_page.dart';
 import 'pages/settings_page.dart';
+import 'pages/calendar_page.dart';
+import 'pages/plans_page.dart';
 import 'background_location_service.dart';
 
 Future<void> main() async {
@@ -61,6 +63,8 @@ class _MyHomePageState extends State<MyHomePage> {
           // attach key so we can reload runs when tab changes
           PastRunsPage(key: _pastRunsKey),
           const RecordPage(),
+          const CalendarPage(),
+          const PlansPage(),
           const SettingsPage(),
         ],
       ),
@@ -72,6 +76,8 @@ class _MyHomePageState extends State<MyHomePage> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.mic), label: 'Record Run'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
+          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Plans'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
         currentIndex: _selectedIndex,
