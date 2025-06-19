@@ -1,4 +1,1 @@
-# Add the table_calendar package for calendar UI
-# See: https://pub.dev/packages/table_calendar
-
-table_calendar: ^3.0.9
+# Remove invalid table_calendar entry from overrides

@@ -361,18 +361,27 @@ class _PlansPageState extends State<PlansPage> {
                   );
                 },
                 child: !started
-                    ? ElevatedButton(
+                    ? Column(
                         key: const ValueKey('start'),
-                        onPressed: startCoach,
-                        child: const Text('Longview Coach'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                        children: [
+                          Image.asset(
+                            'assets/coach.png',
+                            height: 180,
+                            fit: BoxFit.contain,
                           ),
-                        ),
+                          ElevatedButton(
+                            onPressed: startCoach,
+                            child: const Text('Longview Coach'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ],
                       )
                     : Container(
                         key: ValueKey('q$questionIndex'),
