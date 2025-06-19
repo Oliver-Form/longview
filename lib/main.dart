@@ -60,11 +60,15 @@ class _MyHomePageState extends State<MyHomePage> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          // attach key so we can reload runs when tab changes
+          // Log page (was Home)
           PastRunsPage(key: _pastRunsKey),
+          // Run page (was Record Run)
           const RecordPage(),
-          const CalendarPage(),
+          // Workouts page (was Plans)
           const PlansPage(),
+          // Trends page (new, placeholder for now)
+          Center(child: Text('Trends', style: Theme.of(context).textTheme.headlineMedium)),
+          // Settings page
           const SettingsPage(),
         ],
       ),
@@ -74,10 +78,10 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.mic), label: 'Record Run'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
-          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Plans'),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Log'),
+          BottomNavigationBarItem(icon: Icon(Icons.directions_run), label: 'Run'),
+          BottomNavigationBarItem(icon: Icon(Icons.fitness_center), label: 'Workouts'),
+          BottomNavigationBarItem(icon: Icon(Icons.show_chart), label: 'Trends'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
         currentIndex: _selectedIndex,
