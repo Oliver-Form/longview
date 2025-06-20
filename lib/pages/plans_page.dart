@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'new_routine_page.dart';
+import 'explore_workouts_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import '../models/run_plan.dart';
 
 class PlansPage extends StatefulWidget {
   const PlansPage({Key? key}) : super(key: key);
@@ -21,40 +26,62 @@ class _PlansPageState extends State<PlansPage> {
   }
 
   void startCoach() {
-    setState(() {
-      started = true;
-      questionIndex = 0;
-    });
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const CoachWizardPage(),
+      ),
+    );
   }
 
   Widget buildQuestion(BuildContext context) {
     switch (questionIndex) {
       case 0:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return Stack(
           children: [
-            Text("1. What’s your primary goal?", style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 16),
-            ...[
-              'Build general endurance',
-              'Run my first 5K / 10K / Half',
-              'Improve my race time',
-              'Get back into running',
-              'Train consistently with structure',
-              'Custom (I’ll decide everything)'
-            ].map((label) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: RadioListTile<String>(
-                value: label,
-                groupValue: answers['goal'],
-                onChanged: (v) { setState(() { answers['goal'] = v; }); },
-                title: Text(label),
+            // Semi-transparent background art
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.18, // Adjust for subtlety
+                child: Image.asset(
+                  'assets/goals.png',
+                  fit: BoxFit.cover,
+                ),
               ),
-            )),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: answers['goal'] != null ? nextQuestion : null,
-              child: const Text('Confirm'),
+            ),
+            // Main content
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 32),
+                    Text("1. What’s your primary goal?", style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 16),
+                    ...[
+                      'Build general endurance',
+                      'Run my first 5K / 10K / Half',
+                      'Improve my race time',
+                      'Get back into running',
+                      'Train consistently with structure',
+                      'Custom (I’ll decide everything)'
+                    ].map((label) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: RadioListTile<String>(
+                        value: label,
+                        groupValue: answers['goal'],
+                        onChanged: (v) { setState(() { answers['goal'] = v; }); },
+                        title: Text(label),
+                      ),
+                    )),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: answers['goal'] != null ? nextQuestion : null,
+                      child: const Text('Confirm'),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         );
@@ -390,7 +417,647 @@ class _PlansPageState extends State<PlansPage> {
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Workout Libraries',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Browse and add from a collection of curated workouts, intervals, and routines to supplement your plan.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const WorkoutLibraryPage(),
+                        ),
+                      );
+                    },
+                    child: const Text('Your Workout Library'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+}
+
+// Add a new CoachWizardPage widget for the onboarding flow
+class CoachWizardPage extends StatefulWidget {
+  const CoachWizardPage({Key? key}) : super(key: key);
+
+  @override
+  State<CoachWizardPage> createState() => _CoachWizardPageState();
+}
+
+class _CoachWizardPageState extends State<CoachWizardPage> {
+  int questionIndex = 0;
+  final Map<String, dynamic> answers = {};
+  bool started = true;
+
+  void nextQuestion() {
+    setState(() {
+      questionIndex++;
+    });
+  }
+
+  Widget buildQuestion(BuildContext context) {
+    switch (questionIndex) {
+      case 0:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Image.asset(
+                'assets/goals.png',
+                height: 300,
+                width: 300,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text("1. What’s your primary goal?", style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            ...[
+              'Build general endurance',
+              'Run my first 5K / 10K / Half',
+              'Improve my race time',
+              'Get back into running',
+              'Train consistently with structure',
+              'Custom (I’ll decide everything)'
+            ].map((label) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: RadioListTile<String>(
+                value: label,
+                groupValue: answers['goal'],
+                onChanged: (v) { setState(() { answers['goal'] = v; }); },
+                title: Text(label),
+              ),
+            )),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: answers['goal'] != null ? nextQuestion : null,
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      case 1:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("2. How long do you want this plan to be?", style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            StatefulBuilder(
+              builder: (context, setStateSB) {
+                double weeks = (answers['weeks'] ?? 8).toDouble();
+                bool indefinite = answers['indefinite'] == true;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: indefinite,
+                          onChanged: (v) {
+                            setStateSB(() {
+                              answers['indefinite'] = v;
+                            });
+                          },
+                        ),
+                        const Text('Indefinite (ongoing)'),
+                      ],
+                    ),
+                    if (!indefinite) ...[
+                      Slider(
+                        value: weeks,
+                        min: 4,
+                        max: 20,
+                        divisions: 16,
+                        label: '${weeks.round()} weeks',
+                        onChanged: (v) {
+                          setStateSB(() { answers['weeks'] = v; });
+                        },
+                      ),
+                      Text('${weeks.round()} weeks'),
+                    ],
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: indefinite || answers['weeks'] != null ? nextQuestion : null,
+                      child: const Text('Confirm'),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        );
+      case 2:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("3. How many days a week can you realistically run?", style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: List.generate(6, (i) => ChoiceChip(
+                label: Text('${i+2}'),
+                selected: answers['days'] == (i+2),
+                onSelected: (selected) { setState(() { answers['days'] = i+2; }); },
+              )),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: answers['days'] != null ? nextQuestion : null,
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      case 3:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("4. Do you currently run?", style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            ...[
+              'Not yet',
+              'Occasionally',
+              '1–2 times a week',
+              '3+ times a week'
+            ].map((label) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: RadioListTile<String>(
+                value: label,
+                groupValue: answers['current'],
+                onChanged: (v) { setState(() { answers['current'] = v; }); },
+                title: Text(label),
+              ),
+            )),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: answers['current'] != null ? nextQuestion : null,
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      case 4:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("5. What’s your longest recent run?", style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            StatefulBuilder(
+              builder: (context, setStateSB) {
+                double km = (answers['longest'] ?? 5).toDouble();
+                return Column(
+                  children: [
+                    Slider(
+                      value: km,
+                      min: 0,
+                      max: 25,
+                      divisions: 25,
+                      label: '${km.round()} km',
+                      onChanged: (v) {
+                        setStateSB(() { answers['longest'] = v; });
+                      },
+                    ),
+                    Text('${km.round()} km'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: answers['longest'] != null ? nextQuestion : null,
+                      child: const Text('Confirm'),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        );
+      case 5:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("6. Do you have a preferred long run day?", style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            DropdownButton<String>(
+              value: answers['day'],
+              hint: const Text('No preference'),
+              items: [
+                ...['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d) => DropdownMenuItem(value: d, child: Text(d))),
+              ],
+              onChanged: (v) { setState(() { answers['day'] = v; }); },
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: answers['day'] != null ? nextQuestion : null,
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      case 6:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("7. Do you want the program to include:", style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: [
+                ...['Interval training','Hill repeats','Tempo runs','Audio pacing','Voice cues','Heart rate targets'].map((label) => FilterChip(
+                  label: Text(label),
+                  selected: (answers['include'] ?? <String>[]).contains(label),
+                  onSelected: (selected) {
+                    setState(() {
+                      final list = List<String>.from(answers['include'] ?? <String>[]);
+                      if (selected) {
+                        list.add(label);
+                      } else {
+                        list.remove(label);
+                      }
+                      answers['include'] = list;
+                    });
+                  },
+                )),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: nextQuestion,
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      case 7:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("8. Would you like to include a rest/recovery week every 4 weeks?", style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                ChoiceChip(
+                  label: const Text('Yes'),
+                  selected: answers['recovery'] == true,
+                  onSelected: (selected) { setState(() { answers['recovery'] = true; }); },
+                ),
+                const SizedBox(width: 16),
+                ChoiceChip(
+                  label: const Text('No'),
+                  selected: answers['recovery'] == false,
+                  onSelected: (selected) { setState(() { answers['recovery'] = false; }); },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: answers['recovery'] != null ? nextQuestion : null,
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      case 8:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("9. What kind of program would you like?", style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('🧘 Zen — gentle, flexible'),
+                  selected: answers['program'] == 'Zen',
+                  onSelected: (selected) { setState(() { answers['program'] = 'Zen'; }); },
+                ),
+                ChoiceChip(
+                  label: const Text('🎯 Focused — goal-oriented, clear'),
+                  selected: answers['program'] == 'Focused',
+                  onSelected: (selected) { setState(() { answers['program'] = 'Focused'; }); },
+                ),
+                ChoiceChip(
+                  label: const Text('🔥 Hardcore — aggressive improvement'),
+                  selected: answers['program'] == 'Hardcore',
+                  onSelected: (selected) { setState(() { answers['program'] = 'Hardcore'; }); },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: ['program'] != null ? nextQuestion : null,
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      default:
+        return Center(child: Text('All done!'));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    int totalQuestions = 9;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Longview Coach'),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.primary),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 32),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+              child: LinearProgressIndicator(
+                value: (questionIndex + 1) / totalQuestions,
+                minHeight: 8,
+                backgroundColor: Colors.grey[200],
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(24),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  switchInCurve: Curves.easeInOut,
+                  switchOutCurve: Curves.easeInOut,
+                  transitionBuilder: (child, animation) {
+                    final isForward = child.key is ValueKey && (child.key as ValueKey).value == 'q$questionIndex';
+                    final offsetTween = Tween<Offset>(
+                      begin: isForward ? const Offset(1, 0) : const Offset(-1, 0),
+                      end: Offset.zero,
+                    );
+                    return SlideTransition(
+                      position: offsetTween.animate(animation),
+                      child: child,
+                    );
+                  },
+                  child: Container(
+                    key: ValueKey('q$questionIndex'),
+                    child: buildQuestion(context),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Workout Libraries',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Browse and add from a collection of curated workouts, intervals, and routines to supplement your plan.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const WorkoutLibraryPage(),
+                          ),
+                        );
+                      },
+                      child: const Text('Your Workout Library'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Add a stub ExploreWorkoutsPage widget at the end of the file
+class WorkoutLibraryPage extends StatefulWidget {
+  const WorkoutLibraryPage({Key? key}) : super(key: key);
+
+  @override
+  State<WorkoutLibraryPage> createState() => _WorkoutLibraryPageState();
+}
+
+class _WorkoutLibraryPageState extends State<WorkoutLibraryPage> {
+  List<RunPlan> _routines = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRoutines();
+  }
+
+  Future<void> _loadRoutines() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('run_plans') ?? [];
+    setState(() {
+      _routines = list.map((e) => RunPlan.fromJson(jsonDecode(e))).toList();
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Your Workout Library'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const NewRoutinePage(),
+                        ),
+                      );
+                      _loadRoutines();
+                    },
+                    child: const Text('New Routine'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ExploreWorkoutsPage(),
+                        ),
+                      );
+                    },
+                    child: const Text('Explore'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            if (_loading)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else if (_routines.isEmpty)
+              const Expanded(child: Center(child: Text('No routines yet. Tap "New Routine" to create one!')))
+            else
+              Expanded(
+                child: ListView.separated(
+                  itemCount: _routines.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, i) {
+                    final plan = _routines[i];
+                    return Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(plan.title, style: Theme.of(context).textTheme.titleMedium),
+                                ),
+                                PopupMenuButton<String>(
+                                  onSelected: (value) async {
+                                    if (value == 'edit') {
+                                      await Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => NewRoutinePage(plan: plan, index: i),
+                                        ),
+                                      );
+                                      _loadRoutines();
+                                    } else if (value == 'delete') {
+                                      final prefs = await SharedPreferences.getInstance();
+                                      final list = prefs.getStringList('run_plans') ?? [];
+                                      if (i < list.length) {
+                                        list.removeAt(i);
+                                        await prefs.setStringList('run_plans', list);
+                                      }
+                                      setState(() {
+                                        _routines.removeAt(i);
+                                      });
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            ...plan.exercises.map((ex) => Text(
+                              '${ex.type}: ' + (ex.params['duration'] ?? ex.params['value'] ?? ex.params['splits'] ?? ''),
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            )),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
