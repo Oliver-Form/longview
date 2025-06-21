@@ -76,6 +76,7 @@ flutter:
     - assets/strava.png
     - assets/coach.png
     - assets/goals.png
+    - assets/star.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
