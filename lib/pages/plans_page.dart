@@ -21,6 +21,9 @@ class _PlansPageState extends State<PlansPage> {
   // Placeholder for answers, can be expanded for real logic
   final Map<String, dynamic> answers = {};
 
+  // Provide currentVisibleIndex for progress animation
+  int get currentVisibleIndex => questionIndex + 1;
+
   void nextQuestion() {
     setState(() {
       questionIndex++;
@@ -154,10 +157,6 @@ class _PlansPageState extends State<PlansPage> {
                       ),
                     )),
                     const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: answers['goal'] != null ? nextQuestion : null,
-                      child: const Text('Confirm'),
-                    ),
                   ],
                 ),
               ),
@@ -207,10 +206,6 @@ class _PlansPageState extends State<PlansPage> {
                       Text('${weeks.round()} weeks'),
                     ],
                     const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: indefinite || answers['weeks'] != null ? nextQuestion : null,
-                      child: const Text('Confirm'),
-                    ),
                   ],
                 );
               },
@@ -233,10 +228,6 @@ class _PlansPageState extends State<PlansPage> {
               )),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: answers['days'] != null ? nextQuestion : null,
-              child: const Text('Confirm'),
-            ),
           ],
         );
       case 5:
@@ -261,10 +252,6 @@ class _PlansPageState extends State<PlansPage> {
               ),
             )),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: answers['current'] != null ? nextQuestion : null,
-              child: const Text('Confirm'),
-            ),
           ],
         );
       default:
@@ -283,12 +270,20 @@ class _PlansPageState extends State<PlansPage> {
           if (started) 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-              child: LinearProgressIndicator(
-                value: (questionIndex + 1) / totalQuestions,
-                minHeight: 8,
-                backgroundColor: Colors.grey[200],
-                color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(8),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                child: AnimatedContainer(
+                  key: ValueKey(currentVisibleIndex),
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                  child: LinearProgressIndicator(
+                    value: totalQuestions > 0 ? (currentVisibleIndex / totalQuestions) : 0,
+                    minHeight: 8,
+                    backgroundColor: Colors.grey[200],
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
             ),
           const SizedBox(height: 16),
@@ -467,10 +462,6 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
                 ),
               )),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: answers['primary_goal'] != null ? onNext : null,
-                child: const Text('Next'),
-              ),
             ],
           ),
         ),
@@ -484,19 +475,63 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("What race distance are you training for?", style: Theme.of(context).textTheme.titleMedium),
+                Text("What race distance are you training for? (km)", style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 16),
-                ...['5K', '10K', 'Half marathon', 'Marathon', 'Other'].map((d) => RadioListTile<String>(
-                  value: d,
-                  groupValue: answers['race_distance'],
-                  onChanged: (v) { setStateParent(() { answers['race_distance'] = v; }); },
-                  title: Text(d),
-                )),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: answers['race_distance'] != null ? onNext : null,
-                  child: const Text('Next'),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('5K'),
+                      selected: answers['race_distance'] == 5.0,
+                      onSelected: (_) => setStateParent(() {
+                        answers['race_distance'] = 5.0;
+                        answers.remove('race_distance_custom');
+                      }),
+                    ),
+                    ChoiceChip(
+                      label: const Text('10K'),
+                      selected: answers['race_distance'] == 10.0,
+                      onSelected: (_) => setStateParent(() {
+                        answers['race_distance'] = 10.0;
+                        answers.remove('race_distance_custom');
+                      }),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Half Marathon (21.1 km)'),
+                      selected: answers['race_distance'] == 21.1,
+                      onSelected: (_) => setStateParent(() {
+                        answers['race_distance'] = 21.1;
+                        answers.remove('race_distance_custom');
+                      }),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Marathon (42.2 km)'),
+                      selected: answers['race_distance'] == 42.2,
+                      onSelected: (_) => setStateParent(() {
+                        answers['race_distance'] = 42.2;
+                        answers.remove('race_distance_custom');
+                      }),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Other'),
+                      selected: answers['race_distance'] == 'other',
+                      onSelected: (_) => setStateParent(() { answers['race_distance'] = 'other'; }),
+                    ),
+                  ],
                 ),
+                if (answers['race_distance'] == 'other') ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Enter distance in km',
+                    ),
+                    onChanged: (v) {
+                      setStateParent(() { answers['race_distance_custom'] = double.tryParse(v); });
+                    },
+                  ),
+                ],
+                const SizedBox(height: 16),
               ],
             ),
           );
@@ -513,26 +548,37 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
               children: [
                 Text("When is your race?", style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now().add(const Duration(days: 30)),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (picked != null) {
-                      setStateParent(() { answers['race_date'] = picked; });
-                    }
-                  },
-                  child: Text(answers['race_date'] != null ?
-                    'Selected: \\${answers['race_date'].toString().split(' ')[0]}' : 'Pick a date'),
+                SizedBox(
+                  width: 220,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now().add(const Duration(days: 30)),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setStateParent(() { answers['race_date'] = picked; });
+                        _WizardFieldChangedNotification().dispatch(context);
+                      }
+                    },
+                    child: Text(
+                      answers['race_date'] != null
+                        ? 'Selected: ' + (answers['race_date'] as DateTime).toString().split(' ')[0]
+                        : 'Pick a date',
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: answers['race_date'] != null ? onNext : null,
-                  child: const Text('Next'),
-                ),
               ],
             ),
           );
@@ -554,10 +600,6 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
                 title: Text(label),
               )),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: answers['recent_running'] != null ? onNext : null,
-                child: const Text('Next'),
-              ),
             ],
           ),
         ),
@@ -578,10 +620,6 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
                 title: Text(label),
               )),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: answers['current_run_duration'] != null ? onNext : null,
-                child: const Text('Next'),
-              ),
             ],
           ),
         ),
@@ -602,10 +640,6 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
                 title: Text(label),
               )),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: answers['experience'] != null ? onNext : null,
-                child: const Text('Next'),
-              ),
             ],
           ),
         ),
@@ -628,10 +662,6 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
                 )),
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: answers['days_per_week'] != null ? onNext : null,
-                child: const Text('Next'),
-              ),
             ],
           ),
         ),
@@ -666,10 +696,6 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
                 ],
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: (answers['days_available'] != null && (answers['days_available'] as List).isNotEmpty) ? onNext : null,
-                child: const Text('Next'),
-              ),
             ],
           ),
         ),
@@ -705,10 +731,6 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
                 },
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: answers['longest_run'] != null ? onNext : null,
-                child: const Text('Next'),
-              ),
             ],
           ),
         ),
@@ -729,10 +751,6 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
                 title: Text(label),
               )),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: answers['plan_type'] != null ? onNext : null,
-                child: const Text('Next'),
-              ),
             ],
           ),
         ),
@@ -746,26 +764,52 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
             children: [
               Text("Any injuries or limitations we should account for?", style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 16),
-              ...['No', 'Yes'].map((label) => RadioListTile<String>(
-                value: label,
+              RadioListTile<String>(
+                title: const Text('No'),
+                value: 'No',
                 groupValue: answers['injuries'],
-                onChanged: (v) { setStateParent(() { answers['injuries'] = v; }); },
-                title: Text(label),
-              )),
+                onChanged: (v) => setStateParent(() { answers['injuries'] = v; }),
+              ),
+              RadioListTile<String>(
+                title: const Text('Yes'),
+                value: 'Yes',
+                groupValue: answers['injuries'],
+                onChanged: (v) => setStateParent(() { answers['injuries'] = v; }),
+              ),
               if (answers['injuries'] == 'Yes') ...[
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: answers['injury_type'],
+                  decoration: const InputDecoration(labelText: 'Type'),
+                  items: ['Knee', 'Ankle', 'Back', 'IT band', 'Other']
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                      .toList(),
+                  onChanged: (v) => setStateParent(() { answers['injury_type'] = v; }),
+                ),
                 const SizedBox(height: 8),
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Please describe',
-                  ),
-                  onChanged: (v) { setStateParent(() { answers['injuries_note'] = v; }); },
+                Wrap(
+                  spacing: 8,
+                  children: ['Mild', 'Moderate', 'Severe']
+                      .map((sev) => ChoiceChip(
+                            label: Text(sev),
+                            selected: answers['injury_severity'] == sev,
+                            onSelected: (_) => setStateParent(() { answers['injury_severity'] = sev; }),
+                          ))
+                      .toList(),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: ['Chronic', 'Healing', 'Healed']
+                      .map((st) => ChoiceChip(
+                            label: Text(st),
+                            selected: answers['injury_status'] == st,
+                            onSelected: (_) => setStateParent(() { answers['injury_status'] = st; }),
+                          ))
+                      .toList(),
                 ),
               ],
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: answers['injuries'] != null ? onNext : null,
-                child: const Text('Finish'),
-              ),
             ],
           ),
         ),
@@ -840,7 +884,7 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
           ),
           Positioned.fill(
             child: Container(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withOpacity(0.3),
             ),
           ),
           SafeArea(
@@ -859,12 +903,20 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
                 // Progress bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
-                  child: LinearProgressIndicator(
-                    value: totalQuestions > 0 ? (currentVisibleIndex / totalQuestions) : 0,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey[200],
-                    color: Theme.of(context).colorScheme.primary,
-                    borderRadius: BorderRadius.circular(8),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: AnimatedContainer(
+                      key: ValueKey(currentVisibleIndex),
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOut,
+                      child: LinearProgressIndicator(
+                        value: totalQuestions > 0 ? (currentVisibleIndex / totalQuestions) : 0,
+                        minHeight: 8,
+                        backgroundColor: Colors.grey[200],
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
                 ),
                 // Back button (now always shown)
@@ -891,28 +943,45 @@ class _CoachWizardPageState extends State<CoachWizardPage> {
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          minWidth: 280,
-                          maxWidth: 400,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 400,
+                          height: 600,
                         ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(24),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 400),
-                            switchInCurve: Curves.easeInOut,
-                            switchOutCurve: Curves.easeInOut,
-                            child: _questions[questionIndex].builder(context, answers, nextQuestion, setState),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 400),
+                          switchInCurve: Curves.easeInOut,
+                          switchOutCurve: Curves.easeInOut,
+                          transitionBuilder: (child, animation) {
+                            final isForward = child.key is ValueKey && (child.key as ValueKey).value == 'q$questionIndex';
+                            final offsetTween = Tween<Offset>(
+                              begin: isForward ? const Offset(1, 0) : const Offset(-1, 0),
+                              end: Offset.zero,
+                            );
+                            return SlideTransition(
+                              position: offsetTween.animate(animation),
+                              child: child,
+                            );
+                          },
+                          child: Container(
+                            key: ValueKey('q$questionIndex'),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(24),
+                            child: _WizardPanel(
+                              question: _questions[questionIndex],
+                              answers: answers,
+                              onNext: nextQuestion,
+                              setStateParent: setState,
+                            ),
                           ),
                         ),
                       ),
@@ -942,4 +1011,119 @@ class _WizardQuestion {
   final Widget Function(BuildContext context, Map<String, dynamic> answers, VoidCallback onNext, void Function(VoidCallback fn) setStateParent) builder;
   _WizardQuestion({required this.key, required this.builder});
 }
+
+class _WizardPanel extends StatefulWidget {
+  final _WizardQuestion question;
+  final Map<String, dynamic> answers;
+  final VoidCallback onNext;
+  final void Function(VoidCallback fn) setStateParent;
+  const _WizardPanel({required this.question, required this.answers, required this.onNext, required this.setStateParent});
+  @override
+  State<_WizardPanel> createState() => _WizardPanelState();
+}
+
+class _WizardPanelState extends State<_WizardPanel> {
+  bool canProceed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateCanProceed());
+  }
+
+  void _updateCanProceed() {
+    final key = widget.question.key;
+    final a = widget.answers;
+    bool ok = false;
+    switch (key) {
+      case 'primary_goal':
+        ok = a['primary_goal'] != null;
+        break;
+      case 'race_distance':
+        if (a['primary_goal'] != 'Train for a race') ok = true;
+        else ok = a['race_distance'] != null && (a['race_distance'] != 'other' || a['race_distance_custom'] != null);
+        break;
+      case 'race_date':
+        if (a['primary_goal'] != 'Train for a race') ok = true;
+        else ok = a['race_date'] != null;
+        break;
+      case 'recent_running':
+        ok = a['recent_running'] != null;
+        break;
+      case 'current_run_duration':
+        ok = a['current_run_duration'] != null;
+        break;
+      case 'experience':
+        ok = a['experience'] != null;
+        break;
+      case 'days_per_week':
+        ok = a['days_per_week'] != null;
+        break;
+      case 'days_available':
+        ok = a['days_available'] != null && (a['days_available'] as List).isNotEmpty;
+        break;
+      case 'longest_run':
+        ok = a['longest_run'] != null;
+        break;
+      case 'plan_type':
+        ok = a['plan_type'] != null;
+        break;
+      case 'injuries':
+        ok = a['injuries'] != null && (a['injuries'] == 'No' || (a['injuries'] == 'Yes' && a['injury_type'] != null && a['injury_severity'] != null && a['injury_status'] != null));
+        break;
+      default:
+        ok = true;
+    }
+    if (canProceed != ok) setState(() { canProceed = ok; });
+  }
+
+  void _onFieldChanged() {
+    _updateCanProceed();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        Expanded(
+          child: NotificationListener<_WizardFieldChangedNotification>(
+            onNotification: (_) {
+              _onFieldChanged();
+              return false;
+            },
+            child: Builder(
+              builder: (ctx) => widget.question.builder(
+                ctx,
+                widget.answers,
+                () {
+                  if (canProceed) widget.onNext();
+                },
+                (fn) {
+                  widget.setStateParent(fn);
+                  WidgetsBinding.instance.addPostFrameCallback((_) => _updateCanProceed());
+                },
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          onPressed: canProceed ? widget.onNext : null,
+          child: Text(widget.question.key == 'injuries' ? 'Finish' : 'Next'),
+        ),
+      ],
+    );
+  }
+}
+
+class _WizardFieldChangedNotification extends Notification {}
 
