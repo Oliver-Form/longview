@@ -339,9 +339,13 @@ class _RecordPageState extends State<RecordPage> with AutomaticKeepAliveClientMi
     super.initState();
     _loadMapUrlTemplate();
     _mapPrefSub = MapPreferences.onChange.listen((_) => _loadMapUrlTemplate());
-    // Initialize location and check tracking status
-    _initCurrentLocation();
-    _checkTrackingStatus();
+    // Request permissions after first frame; then initialize location and check tracking
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (await requestPermissions(context)) {
+        await _initCurrentLocation();
+      }
+      await _checkTrackingStatus();
+    });
   }
 
   Future<void> _loadMapUrlTemplate() async {
