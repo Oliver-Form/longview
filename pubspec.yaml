@@ -74,7 +74,6 @@ flutter:
   assets:
     - assets/hevy.png
     - assets/strava.png
-    - assets/coach.png
     - assets/goals.png
     - assets/star.png
 

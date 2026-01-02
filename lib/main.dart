@@ -4,7 +4,7 @@ import 'pages/record_page.dart';
 import 'pages/past_runs_page.dart';
 import 'pages/settings_page.dart';
 import 'pages/calendar_page.dart';
-import 'pages/plans_page.dart';
+// plans_page removed (workouts feature removed)
 import 'background_location_service.dart';
 
 Future<void> main() async {
@@ -64,9 +64,9 @@ class _MyHomePageState extends State<MyHomePage> {
           PastRunsPage(key: _pastRunsKey),
           // Run page (was Record Run)
           const RecordPage(),
-          // Workouts page (was Plans)
-          const PlansPage(),
-          // Trends page (new, placeholder for now)
+          // Trends page (was Workouts removed; placeholder)
+          // index shifted after removing Workouts
+          // Trends page (placeholder for now)
           Center(child: Text('Trends', style: Theme.of(context).textTheme.headlineMedium)),
           // Settings page
           const SettingsPage(),
@@ -80,7 +80,6 @@ class _MyHomePageState extends State<MyHomePage> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Log'),
           BottomNavigationBarItem(icon: Icon(Icons.directions_run), label: 'Run'),
-          BottomNavigationBarItem(icon: Icon(Icons.fitness_center), label: 'Workouts'),
           BottomNavigationBarItem(icon: Icon(Icons.show_chart), label: 'Trends'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
